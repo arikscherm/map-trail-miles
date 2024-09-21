@@ -60,7 +60,8 @@ def clip_layers(feature_layers: dict, mask: gpd.GeoSeries) -> dict:
     
     
 def calculate_trail_miles(trails_gdf: gpd.GeoSeries) -> float:
-    trails_pcs = trails_gdf.to_crs('ESRI:103246') #TODO: Paramterize this
+    area_pcs = 'EPSG:2774' #TODO: Paramterize this
+    trails_pcs = trails_gdf.to_crs(area_pcs) 
     trail_miles = round(sum(trails_pcs['geometry'].length)/1609.34,3)
     return f'{trail_miles} Miles of Trail Within Area of Interest Based on {str(trails_pcs.crs).upper()} Projection'
     
@@ -70,7 +71,7 @@ def show(clipped_layers, mask, plot_title, trails_gdf):
     ax.set_title(plot_title)
     
     mask.plot(ax=ax, color='floralwhite')
-    clipped_layers['trails'].plot(ax=ax, color='indianred',linestyle='dashed',linewidth=0.8)
+    clipped_layers['trails'].plot(ax=ax, color='indianred',linestyle='dashed',linewidth=0.8, zorder=float('inf'))
     clipped_layers['water'].plot(ax=ax,color='skyblue')
     clipped_layers['streets'].plot(ax=ax,color='gainsboro')
     clipped_layers['roads'].plot(ax=ax, color='darkgrey',linewidth=1.5)
@@ -84,6 +85,7 @@ def create_trail_miles_map(area, feature_layers_payload):
     clipped_layers = clip_layers(feature_layers,mask)
     plot_title = calculate_trail_miles(clipped_layers['trails'])
     show(clipped_layers, mask, plot_title, clipped_layers['trails'])
+    plt.savefig('trails.pdf')
 
 
 
