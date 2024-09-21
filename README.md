@@ -57,7 +57,10 @@ Here's an example using a bounding box around Durango, Colorado:
   }
 ```
 
-![trails](https://github.com/user-attachments/assets/d953d6ae-8cb8-4073-a773-6a746fd49e9c)
+<img width="705" alt="image" src="https://github.com/user-attachments/assets/f7c11be8-57d4-4412-b5a8-90822c5e02ce">
+
+
+
 
 
 
