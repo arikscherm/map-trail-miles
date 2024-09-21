@@ -1,0 +1,10 @@
+name: ox
+channels:
+  - conda-forge
+strict-channel-priority: true
+dependencies:
+  - python=3.12.5
+  - osmnx=1.9.4
+  - geopandas=0.14.2
+  - shapely=2.0.5
+  - matplotlib=3.8.4
