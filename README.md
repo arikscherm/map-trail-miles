@@ -1,6 +1,6 @@
 # map-trail-miles
 
-This project maps out features from OpenStreetMap and calculates total trail mileage within a geographic area of interest.
+This project visualizes features from OpenStreetMap and calculates total trail mileage within a geographic area of interest.
 
 ## Prerequisites
 
