@@ -17,7 +17,7 @@ To set up a conda environment for this project, run
 
 ## Usage
 
-The main function in the `map.py` script, `create_trail_miles_map()` takes in two arguments.
+The main function in the `map.py` script, `create_trail_mileage_map()` takes in two arguments.
 1. `area`: The geographic area of interest. This can be defined in two ways:
    1. A **placename** that Nominatim/OpenStreetMap recognizes (e.g., "Durango, Colorado, USA").
    2. A **list of coordinates** which define a [bounding box](https://www.keene.edu/campus/maps/tool/) `[north_bound, south_bound, east_bound, west_bound]`.
