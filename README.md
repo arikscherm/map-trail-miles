@@ -60,7 +60,3 @@ Here's an example using a bounding box around Durango, Colorado:
 <img width="705" alt="image" src="https://github.com/user-attachments/assets/f7c11be8-57d4-4412-b5a8-90822c5e02ce">
 
 
-
-
-
-
