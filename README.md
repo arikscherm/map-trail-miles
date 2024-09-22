@@ -1,6 +1,6 @@
 # map-trail-miles
 
-This project maps features from OpenStreetMap and calculates total trail mileage within a geographic area of interest.
+This project maps out features from OpenStreetMap and calculates total trail mileage within a geographic area of interest.
 
 ## Prerequisites
 
@@ -17,9 +17,9 @@ To set up a conda environment for this project, run
 
 ## Usage
 
-The main function in the `map.py` script, `create_trail_miles_map()` function takes in two arguments.
+The main function in the `map.py` script, `create_trail_miles_map()` takes in two arguments.
 1. `area`: The geographic area of interest. This can be defined in two ways:
-   1. A **placename** (e.g., "Durango, Colorado, USA").
+   1. A **placename** that Nominatim/OpenStreetMap recognizes (e.g., "Durango, Colorado, USA").
    2. A **list of coordinates** which define a [bounding box](https://www.keene.edu/campus/maps/tool/) `[north_bound, south_bound, east_bound, west_bound]`.
 
 2. `feature_class_payload`: This determines which feature layers and tags are fetched from OpenStreetMap.
@@ -57,7 +57,7 @@ Here's an example using a bounding box around Durango, Colorado:
   }
 ```
 
-![trails](https://github.com/user-attachments/assets/d953d6ae-8cb8-4073-a773-6a746fd49e9c)
+<img width="705" alt="image" src="https://github.com/user-attachments/assets/f7c11be8-57d4-4412-b5a8-90822c5e02ce">
 
 
 
