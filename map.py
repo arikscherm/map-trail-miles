@@ -85,7 +85,7 @@ def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> str:
     
 
 # Visualize the clipped feature layers
-def show(clipped_layers, mask, plot_title, trails):
+def show(clipped_layers, mask, plot_title):
     figure, ax = plt.subplots(figsize=(12,8))
     ax.set_title(plot_title)
     
@@ -121,7 +121,7 @@ def show(clipped_layers, mask, plot_title, trails):
 
 
 # Main function to create and save a trail mileage map
-def create_trail_miles_map(area, feature_layers_payload):
+def create_trail_mileage_map(area, feature_layers_payload):
     mask = create_mask(area)
     feature_layers = get_features(area, feature_layers_payload) 
     clipped_layers = clip_layers(feature_layers,mask)
@@ -129,7 +129,7 @@ def create_trail_miles_map(area, feature_layers_payload):
         plot_title = calculate_trail_miles(mask, clipped_layers['trails'])
     except:
         plot_title = "No trail miles found"
-    show(clipped_layers, mask, plot_title, clipped_layers['trails'])
+    show(clipped_layers, mask, plot_title)
     plt.savefig(f'trail-mileage-maps/{area}-trails.pdf')
 
 
@@ -174,6 +174,6 @@ if __name__ == '__main__':
 
     area = bbox # | placename
 
-    create_trail_miles_map(area, feature_layers_payload)
+    create_trail_mileage_map(area, feature_layers_payload)
 
 
