@@ -88,36 +88,20 @@ def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> str:
 def show(clipped_layers, mask, plot_title):
     figure, ax = plt.subplots(figsize=(12,8))
     ax.set_title(plot_title)
-    
-    mask.plot(ax=ax, color='floralwhite')
-    try: 
-        clipped_layers['trails'].plot(ax=ax, color='indianred',linestyle='dashed',linewidth=0.8, zorder=float('inf'))
-    except Exception as e:
-        print(f"No trails to map: {e}")
-    try: 
-        clipped_layers['water'].plot(ax=ax,color='skyblue')
-    except Exception as e:
-        print(f"No water to map: {e}")
-    try: 
-        clipped_layers['streets'].plot(ax=ax,color='gainsboro')
-    except Exception as e:
-        print(f"No streets to map: {e}")
-    try: 
-        clipped_layers['roads'].plot(ax=ax, color='darkgrey',linewidth=1.5)
-    except Exception as e:
-        print(f"No roads to map: {e}")
-    try: 
-        clipped_layers['highways'].plot(ax=ax, color='dimgrey',linewidth=2)
-    except Exception as e:
-        print(f"No highways to map: {e}")
-    try: 
-        clipped_layers['parks'].plot(ax=ax,color='beige')
-    except Exception as e:
-        print(f"No parks to map: {e}")
-    try: 
-        clipped_layers['buildings'].plot(ax=ax,color='silver')
-    except Exception as e:
-        print(f"No buildings to map: {e}")
+
+    plot_layer = lambda name, color, **kwargs: (
+        clipped_layers[name].plot(ax=ax, color=color, **kwargs)
+        if name in clipped_layers else print(f'No {name} to map')
+    )
+
+    plot_layer('mask', 'floralwhite')
+    plot_layer('trails', 'indianred', linestyle='dashed', linewidth=0.8, zorder=float('inf'))
+    plot_layer('water', 'skyblue')
+    plot_layer('streets', 'gainsboro')
+    plot_layer('roads', 'darkgrey', linewidth=1.5)
+    plot_layer('highways', 'dimgrey', linewidth=2)
+    plot_layer('parks', 'beige')
+    plot_layer('buildings', 'silver')
 
 
 # Main function to create and save a trail mileage map
