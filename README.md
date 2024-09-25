@@ -2,6 +2,11 @@
 
 This project visualizes features from OpenStreetMap and calculates total trail mileage within a geographic area of interest.
 
+Here's an example using a bounding box around Durango, Colorado:
+
+<img width="705" alt="image" src="https://github.com/user-attachments/assets/f7c11be8-57d4-4412-b5a8-90822c5e02ce">
+
+
 ## Prerequisites
 
 Before running, ensure the following Python libraries are installed:
@@ -12,7 +17,7 @@ Before running, ensure the following Python libraries are installed:
 - [Matplotlib](https://matplotlib.org/stable/index.html)
 
 
-To set up a [conda](https://conda.io/projects/conda/en/latest/user-guide/index.html) environment for this project, run 
+To set up a [conda](https://conda.io/projects/conda/en/latest/user-guide/index.html) environment for this project, run\
 `conda env create -f environment.yml`
 
 ## Usage
@@ -60,5 +65,6 @@ Here's an example using a bounding box around Durango, Colorado:
 ```
 
 <img width="705" alt="image" src="https://github.com/user-attachments/assets/f7c11be8-57d4-4412-b5a8-90822c5e02ce">
+
 
 
