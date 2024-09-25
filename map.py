@@ -2,6 +2,7 @@ import osmnx
 import geopandas as gpd
 from shapely.geometry import Polygon
 import matplotlib.pyplot as plt
+import sys
 
 # Create polygon boundary for feature layers based on bounding box or placename
 # Input: area can be a list of four coordinates [north, south, east, west] or a placename as a string.
@@ -16,9 +17,9 @@ def create_mask(area) -> gpd.GeoSeries:
     elif isinstance(area, str):
         try:
             mask = osmnx.geocode_to_gdf(area)
-            return mask
-        except Exception as e:
-            print(e)
+            return mask.iloc[0]
+        except:
+            raise Exception(f"Unable to geocode area {area}: {Exception}")
     
     else:
         raise TypeError("Area of interest must be described by string or list of four coordiantes [north, south, east, west]")
@@ -47,7 +48,6 @@ def get_features(area, feature_layers_payload: dict) -> dict:
                 )    
             except Exception as e:
                 print(f'Error fetching features for {tag}: {e}')
-                continue
 
     else:
         raise TypeError("Area of interest must be described by string or list of four coordiantes [north, south, east, west]")
@@ -57,17 +57,21 @@ def get_features(area, feature_layers_payload: dict) -> dict:
 
 
 def clip_layers(feature_layers: dict, mask: gpd.GeoSeries) -> dict:
-    clipped_layers = {key: gpd.clip(gdf,mask) for key, gdf in feature_layers.items()}
+    if len(mask) == 4:
+        clipped_layers = {key: gpd.clip(gdf,mask) for key, gdf in feature_layers.items()}
+    else:
+        mask_gdf = gpd.GeoDataFrame({'geometry' : [mask.iloc[0]]})
+        clipped_layers = {key: gpd.clip(gdf,mask_gdf) for key, gdf in feature_layers.items()}
     return clipped_layers
 
 
 # Find the most appropriate projected coordinate system for the area of interest
 def get_map_projection(mask: gpd.GeoSeries) -> str:
-    mask_geometry = mask.iloc[0]
+    mask_centroid = mask.iloc[0].centroid
 
     # Load available projections and select the ones that contain the mask centroid
     map_projections = gpd.read_file('projections.geojson')
-    valid_map_projections = map_projections.loc[map_projections['geometry'].contains(mask_geometry.centroid)]
+    valid_map_projections = map_projections.loc[map_projections['geometry'].contains(mask_centroid)]
 
     # Reproject to World Mercator to avoid calculating area with a geographic CRS
     valid_map_projections = valid_map_projections.to_crs('EPSG:3395')
@@ -107,13 +111,18 @@ def show(clipped_layers, mask, plot_title):
 
 # Main function to create and save a trail mileage map
 def create_trail_mileage_map(area, feature_layers_payload):
-    mask = create_mask(area)
+    try:
+        mask = create_mask(area)
+    except Exception as e:
+        print(e)
+        return None
+
     feature_layers = get_features(area, feature_layers_payload) 
-    clipped_layers = clip_layers(feature_layers,mask)
+    clipped_layers = clip_layers(feature_layers, mask)
     try:
         plot_title = calculate_trail_miles(mask, clipped_layers['trails'])
-    except:
-        plot_title = "No trail miles found"
+    except Exception as e:
+        plot_title = f'No trail miles found: {e}'
     show(clipped_layers, mask, plot_title)
     plt.savefig(f'trail-mileage-maps/{area}-trails.pdf')
 
@@ -141,7 +150,8 @@ if __name__ == '__main__':
         },
         'water': {
             'water': ['river', 'pond', 'lake', 'reservoir'],
-            'waterway': ['river']
+            'waterway': ['river', 'canal'],
+            'natural': ['water']
         },
         'buildings': {
             'building': True
