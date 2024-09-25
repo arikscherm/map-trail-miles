@@ -18,8 +18,8 @@ def create_mask(area) -> gpd.GeoSeries:
         try:
             mask = osmnx.geocode_to_gdf(area)
             return mask.iloc[0]
-        except:
-            raise Exception(f"Unable to geocode area {area}: {Exception}")
+        except Exception as e:
+            raise Exception(f"Unable to geocode area {area}: {e}")
     
     else:
         raise TypeError("Area of interest must be described by string or list of four coordiantes [north, south, east, west]")
@@ -90,7 +90,7 @@ def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> str:
     
 
 # Visualize the clipped feature layers
-def show(clipped_layers, mask, plot_title):
+def show(clipped_layers, plot_title):
     figure, ax = plt.subplots(figsize=(12,8))
     ax.set_title(plot_title)
 
@@ -123,7 +123,7 @@ def create_trail_mileage_map(area, feature_layers_payload):
         plot_title = calculate_trail_miles(mask, clipped_layers['trails'])
     except Exception as e:
         plot_title = f'No trail miles found: {e}'
-    show(clipped_layers, mask, plot_title)
+    show(clipped_layers, plot_title)
     plt.savefig(f'trail-mileage-maps/{area}-trails.pdf')
 
 
