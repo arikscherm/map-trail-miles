@@ -25,14 +25,14 @@ def create_mask(area) -> gpd.GeoSeries:
 
 
 # Create a dictionary of GeoDataFrames for each feature layer tag
-def get_features(area: list, feature_layers_payload: dict) -> dict:
+def get_features(area, feature_layers_payload: dict) -> dict:
     feature_layers = {}
     if isinstance(area, list):
         for tag in feature_layers_payload.keys():
             try:
                 feature_layers[tag] = osmnx.features.features_from_bbox(
                     *area,
-                    tags=feature_layers_payload[tag]
+                    tags=feature_layers_payload.get(tag)
                 )  
             except Exception as e:
                 print(f'Error fetching features for {tag}: {e}')
@@ -43,7 +43,7 @@ def get_features(area: list, feature_layers_payload: dict) -> dict:
             try:
                 feature_layers[tag] = osmnx.geometries_from_place(
                     area,
-                    tags=feature_layers_payload[tag]
+                    tags=feature_layers_payload.get(tag)
                 )    
             except Exception as e:
                 print(f'Error fetching features for {tag}: {e}')
@@ -53,7 +53,7 @@ def get_features(area: list, feature_layers_payload: dict) -> dict:
         raise TypeError("Area of interest must be described by string or list of four coordiantes [north, south, east, west]")
             
     # Filter dictionary to include only GeoDataFrame values
-    return {k: v for k, v in feature_layers.items() if isinstance(v, gpd.GeoDataFrame)}
+    return {tag: gdf for tag, gdf in feature_layers.items() if isinstance(gdf, gpd.GeoDataFrame)}
 
 
 def clip_layers(feature_layers: dict, mask: gpd.GeoSeries) -> dict:
@@ -63,18 +63,19 @@ def clip_layers(feature_layers: dict, mask: gpd.GeoSeries) -> dict:
 
 # Find the most appropriate projected coordinate system for the area of interest
 def get_map_projection(mask: gpd.GeoSeries) -> str:
-    mask_center = mask.iloc[0].centroid
+    mask_geometry = mask.iloc[0]
 
     # Load available projections and select the ones that contain the mask centroid
     map_projections = gpd.read_file('projections.geojson')
-    valid_map_projections = map_projections.loc[map_projections['geometry'].contains(mask_center)]
+    valid_map_projections = map_projections.loc[map_projections['geometry'].contains(mask_geometry.centroid)]
 
     # Reproject to World Mercator to avoid calculating area with a geographic CRS
     valid_map_projections = valid_map_projections.to_crs('EPSG:3395')
 
     # Choose the projection with the smallest area to minimize distortion
     projection_to_use = valid_map_projections[valid_map_projections.geometry.area == valid_map_projections.geometry.area.min()]
-    return str(projection_to_use.code.iloc[0])
+    projection_to_use_code = projection_to_use.code.iloc[0]
+    return projection_to_use_code
 
     
 def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> str:
