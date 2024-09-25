@@ -31,7 +31,7 @@ The main function in the `map.py` script, `create_trail_mileage_map()` takes in 
 
 2. `feature_class_payload`: This determines which feature layers and tags are fetched from OpenStreetMap. Note that the `show()` method must be modified in order to visualize feature layers that aren't included in the following example. 
 
-Here's an example using a bounding box around Durango, Colorado:
+The following inputs for `area` and `feature_layers_payload` will output the map of Durango, Colorado shown above:
 
   ```python
   area = [37.335, 37.25, -107.81, -107.915]
@@ -64,7 +64,6 @@ Here's an example using a bounding box around Durango, Colorado:
   }
 ```
 
-<img width="705" alt="image" src="https://github.com/user-attachments/assets/f7c11be8-57d4-4412-b5a8-90822c5e02ce">
 
 
 
