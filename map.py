@@ -7,18 +7,18 @@ import sys
 
 # Create polygon boundary for feature layers based on bounding box or placename
 # Input: area can be a list of four coordinates [north, south, east, west] or a placename as a string.
-def create_mask(area) -> gpd.GeoSeries:
+def create_mask(area) -> gpd.GeoDataFrame:
     if isinstance(area, list):
         if len(area) != 4:
             raise ValueError("List must contain exactly four coordinates: [north, south, east, west]")
         north_bound, south_bound, east_bound, west_bound = area
         mask = Polygon([(west_bound, south_bound), (west_bound, north_bound), (east_bound, north_bound), (east_bound, south_bound)])
-        return gpd.GeoSeries(mask)
+        return gpd.GeoDataFrame({'geometry' : [mask]})
     
     elif isinstance(area, str):
         try:
             mask = osmnx.geocode_to_gdf(area)
-            return mask.iloc[0]
+            return mask
         except Exception as e:
             raise Exception(f"Unable to geocode area {area}: {e}")
     
@@ -28,6 +28,8 @@ def create_mask(area) -> gpd.GeoSeries:
 
 # Create a dictionary of GeoDataFrames for each feature layer tag
 def get_features(area, feature_layers_payload: dict) -> dict:
+    if not isinstance(feature_layers_payload, dict):
+        raise TypeError("Feature layers must be represented by dictionary")
     feature_layers = {}
     if isinstance(area, list):
         for tag in feature_layers_payload.keys():
@@ -37,7 +39,7 @@ def get_features(area, feature_layers_payload: dict) -> dict:
                     tags=feature_layers_payload.get(tag)
                 )  
             except Exception as e:
-                print(f'Error fetching features for {tag}: {e}')
+                print(f'Error fetching features for {tag}: {e} \n https://osmnx.readthedocs.io/en/stable/user-reference.html')
                 continue
     
     elif isinstance(area, str):
@@ -48,7 +50,7 @@ def get_features(area, feature_layers_payload: dict) -> dict:
                     tags=feature_layers_payload.get(tag)
                 )    
             except Exception as e:
-                print(f'Error fetching features for {tag}: {e}')
+                print(f'Error fetching features for {tag}: {e} \n https://osmnx.readthedocs.io/en/stable/user-reference.html')
 
     else:
         raise TypeError("Area of interest must be described by string or list of four coordiantes [north, south, east, west]")
@@ -57,13 +59,15 @@ def get_features(area, feature_layers_payload: dict) -> dict:
     return {tag: gdf for tag, gdf in feature_layers.items() if isinstance(gdf, gpd.GeoDataFrame)}
 
 
-def clip_layers(feature_layers: dict, mask: gpd.GeoSeries) -> dict:
-    if len(mask) == 4:
-        clipped_layers = {key: gpd.clip(gdf,mask) for key, gdf in feature_layers.items()}
-    else:
-        mask_gdf = gpd.GeoDataFrame({'geometry' : [mask.iloc[0]]})
-        clipped_layers = {key: gpd.clip(gdf,mask_gdf) for key, gdf in feature_layers.items()}
-    clipped_layers['mask'] = gpd.GeoSeries(mask)
+def clip_layers(feature_layers: dict, mask: gpd.GeoDataFrame) -> dict:
+    # if len(mask) == 4:
+    #     clipped_layers = {key: gpd.clip(gdf,mask) for key, gdf in feature_layers.items()}
+    # else:
+    #     mask_gdf = gpd.GeoDataFrame({'geometry' : [mask.iloc[0]]})
+    #     clipped_layers = {key: gpd.clip(gdf,mask_gdf) for key, gdf in feature_layers.items()}
+    # clipped_layers['mask'] = gpd.GeoSeries(mask)
+    # return clipped_layers
+    clipped_layers = {key: gpd.clip(gdf,mask) for key, gdf in feature_layers.items()}
     return clipped_layers
 
 
@@ -170,10 +174,15 @@ if __name__ == '__main__':
         }
     }
         
-    north_bound = 37.335
-    south_bound = 37.25
-    east_bound = -107.81
-    west_bound = -107.915
+    # north_bound = 37.335
+    # south_bound = 37.25
+    # east_bound = -107.81
+    # west_bound = -107.915
+
+    north_bound = 50.5
+    south_bound = 49.5
+    east_bound = -99.5
+    west_bound = -100.5
 
 
     bbox = [north_bound, south_bound, east_bound, west_bound]
