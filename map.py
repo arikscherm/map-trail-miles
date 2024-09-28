@@ -1,5 +1,6 @@
 import osmnx
 import geopandas as gpd
+import pandas as pd
 from shapely.geometry import Polygon
 import matplotlib.pyplot as plt
 import sys
@@ -62,6 +63,7 @@ def clip_layers(feature_layers: dict, mask: gpd.GeoSeries) -> dict:
     else:
         mask_gdf = gpd.GeoDataFrame({'geometry' : [mask.iloc[0]]})
         clipped_layers = {key: gpd.clip(gdf,mask_gdf) for key, gdf in feature_layers.items()}
+    clipped_layers['mask'] = gpd.GeoSeries(mask)
     return clipped_layers
 
 
@@ -81,6 +83,15 @@ def get_map_projection(mask: gpd.GeoSeries) -> str:
     projection_to_use_code = projection_to_use.code.iloc[0]
     return projection_to_use_code
 
+def filter_trails(trails: gpd.GeoSeries) -> str:
+    trail_segments = trails.loc[trails['highway'] == 'path']
+    footways = trails.loc[trails['highway'] == 'footway']
+    footway_trail_surfaces = ['gravel', 'dirt', 'grass','compacted']
+    footways_trail_segments = footways.loc[footways['surface'].isin(footway_trail_surfaces)]
+    trails = pd.concat([footways_trail_segments, trail_segments])
+    return trails
+
+
     
 def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> str:
     projection_to_use = get_map_projection(mask)
@@ -99,14 +110,14 @@ def show(clipped_layers, plot_title):
         if name in clipped_layers else print(f'No {name} to map')
     )
 
-    plot_layer('mask', 'floralwhite')
-    plot_layer('trails', 'indianred', linestyle='dashed', linewidth=0.8, zorder=float('inf'))
-    plot_layer('water', 'skyblue')
-    plot_layer('streets', 'gainsboro')
-    plot_layer('roads', 'darkgrey', linewidth=1.5)
-    plot_layer('highways', 'dimgrey', linewidth=2)
-    plot_layer('parks', 'beige')
-    plot_layer('buildings', 'silver')
+    plot_layer('mask', '#ECF2D4', zorder=float('-inf'))
+    plot_layer('trails', '#BA6461', linestyle='dashed', linewidth=0.8, zorder=float('inf'))
+    plot_layer('water', '#9FD9E9')
+    plot_layer('streets', '#FFFFFF')
+    plot_layer('roads', '#F9E9A0', linewidth=1.5)
+    plot_layer('highways','#F3CD71', linewidth=2)
+    plot_layer('parks', '#CEDFC2')
+    plot_layer('buildings', '#D4D1CB')
 
 
 # Main function to create and save a trail mileage map
@@ -119,6 +130,7 @@ def create_trail_mileage_map(area, feature_layers_payload):
 
     feature_layers = get_features(area, feature_layers_payload) 
     clipped_layers = clip_layers(feature_layers, mask)
+    clipped_layers['trails'] = filter_trails(clipped_layers['trails'])
     try:
         plot_title = calculate_trail_miles(mask, clipped_layers['trails'])
     except Exception as e:
