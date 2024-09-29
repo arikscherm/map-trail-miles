@@ -60,13 +60,6 @@ def get_features(area, feature_layers_payload: dict) -> dict:
 
 
 def clip_layers(feature_layers: dict, mask: gpd.GeoDataFrame) -> dict:
-    # if len(mask) == 4:
-    #     clipped_layers = {key: gpd.clip(gdf,mask) for key, gdf in feature_layers.items()}
-    # else:
-    #     mask_gdf = gpd.GeoDataFrame({'geometry' : [mask.iloc[0]]})
-    #     clipped_layers = {key: gpd.clip(gdf,mask_gdf) for key, gdf in feature_layers.items()}
-    # clipped_layers['mask'] = gpd.GeoSeries(mask)
-    # return clipped_layers
     clipped_layers = {key: gpd.clip(gdf,mask) for key, gdf in feature_layers.items()}
     return clipped_layers
 
@@ -87,6 +80,8 @@ def get_map_projection(mask: gpd.GeoSeries) -> str:
     projection_to_use_code = projection_to_use.code.iloc[0]
     return projection_to_use_code
 
+
+# Join 'highway : path' tags and 'highway : footway' tags after filtering 'highway : footway' tags by surface
 def filter_trails(trails: gpd.GeoSeries) -> str:
     trail_segments = trails.loc[trails['highway'] == 'path']
     footways = trails.loc[trails['highway'] == 'footway']
@@ -94,7 +89,6 @@ def filter_trails(trails: gpd.GeoSeries) -> str:
     footways_trail_segments = footways.loc[footways['surface'].isin(footway_trail_surfaces)]
     trails = pd.concat([footways_trail_segments, trail_segments])
     return trails
-
 
     
 def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> str:
