@@ -5,6 +5,8 @@ from shapely.geometry import Polygon
 import matplotlib.pyplot as plt
 import sys
 
+import shapely
+
 # Create polygon boundary for feature layers based on bounding box or placename
 # Input: area can be a list of four coordinates [north, south, east, west] or a placename as a string.
 def create_mask(area) -> gpd.GeoDataFrame:
@@ -65,8 +67,9 @@ def clip_layers(feature_layers: dict, mask: gpd.GeoDataFrame) -> dict:
 
 
 # Find the most appropriate projected coordinate system for the area of interest
-def get_map_projection(mask: gpd.GeoSeries) -> str:
-    mask_centroid = mask.iloc[0].centroid
+def get_map_projection(mask: gpd.GeoDataFrame) -> str:
+    mask_polygon = mask['geometry'].iloc[0]
+    mask_centroid = mask_polygon.centroid
 
     # Load available projections and select the ones that contain the mask centroid
     map_projections = gpd.read_file('projections.geojson')
@@ -74,11 +77,10 @@ def get_map_projection(mask: gpd.GeoSeries) -> str:
 
     # Reproject to World Mercator to avoid calculating area with a geographic CRS
     valid_map_projections = valid_map_projections.to_crs('EPSG:3395')
-
     # Choose the projection with the smallest area to minimize distortion
     projection_to_use = valid_map_projections[valid_map_projections.geometry.area == valid_map_projections.geometry.area.min()]
-    projection_to_use_code = projection_to_use.code.iloc[0]
-    return projection_to_use_code
+    projection_to_use_code = projection_to_use.code
+    return projection_to_use_code.iloc[0]
 
 
 # Join 'highway : path' tags and 'highway : footway' tags after filtering 'highway : footway' tags by surface

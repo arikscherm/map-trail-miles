@@ -5,6 +5,7 @@ from shapely.geometry import LineString
 from map import create_mask
 from map import get_features
 from map import clip_layers
+from map import get_map_projection
 
 
 class TestCreateMask(unittest.TestCase):
@@ -109,12 +110,28 @@ class TestClipLayers(unittest.TestCase):
 		self.assertEqual(polygons_clipped_correctly, True)
 
 
+class TestMapProjection(unittest.TestCase):
+
+	def test_epsg2774(self):
+		polygon = Polygon([(-107.915, 37.25),(-107.915, 37.35),(-107.81, 37.35),(-107.81, 37.25)])
+		mask = gpd.GeoDataFrame({'geometry' : [polygon]})
+		result = get_map_projection(mask)
+		self.assertEqual(result, 'EPSG:2774')
+
+
+	def test_epsg3395(self):
+		polygon = Polygon([(137.23, -26.91),(137.23, -26.92),(137.24, -26.92),(137.24, -26.91)])
+		mask = gpd.GeoDataFrame({'geometry' : [polygon]})
+		result = get_map_projection(mask)
+		self.assertEqual(result, 'EPSG:3395')
+
 
 
 
 
 if __name__ == '__main__':
     unittest.main()
+
 
 
 
