@@ -6,6 +6,7 @@ from map import create_mask
 from map import get_features
 from map import clip_layers
 from map import get_map_projection
+from map import filter_trails
 
 
 class TestCreateMask(unittest.TestCase):
@@ -99,6 +100,7 @@ class TestClipLayers(unittest.TestCase):
 
 
 	def test_clip_layers(self):
+		#maybe floor these to make sure contains() doesn't mess up math
 		result = clip_layers(self.layers_to_clip, self.mask_gdf)
 		self.assertEqual(type(result), dict)
 		clipped_lines = gpd.GeoSeries(result['lines']['geometry'])
@@ -127,6 +129,28 @@ class TestMapProjection(unittest.TestCase):
 
 
 
+class TestFilterTrails(unittest.TestCase):
+	unfiltered_trails = gpd.read_file('test_trails.geojson')
+	filtered_trails = filter_trails(unfiltered_trails)
+
+	def test_fetched_paths(self):
+		self.assertTrue(self.filtered_trails.loc[self.filtered_trails['highway'] == 'path'].bool)
+
+	def test_fetched_footways(self):
+		self.assertTrue(self.filtered_trails.loc[self.filtered_trails['highway'] == 'footway'].bool)
+
+	def test_filter_footways(self):
+		footways = self.filtered_trails.loc[self.filtered_trails['highway'] == 'footway']
+		
+		self.assertTrue(footways.loc[footways['surface'] == 'concrete'].empty)
+		self.assertTrue(footways.loc[footways['surface'] == 'asphalt'].empty)
+		self.assertTrue(footways.loc[footways['surface'] == 'paved'].empty)
+
+
+class TestCalcTrailMile(unittest.TestCase):
+
+	def test_durango_trails(self):
+		pass #get processed df for durango trails. write file, and then use that. load it in, run function. assert 114 something
 
 
 if __name__ == '__main__':
@@ -135,10 +159,6 @@ if __name__ == '__main__':
 
 
 
-
-# test clip layers
-
-# test get map projection
 
 # test filter trails
 

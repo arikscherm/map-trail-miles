@@ -63,6 +63,7 @@ def get_features(area, feature_layers_payload: dict) -> dict:
 
 def clip_layers(feature_layers: dict, mask: gpd.GeoDataFrame) -> dict:
     clipped_layers = {key: gpd.clip(gdf,mask) for key, gdf in feature_layers.items()}
+    clipped_layers['mask'] = mask
     return clipped_layers
 
 
@@ -130,8 +131,8 @@ def create_trail_mileage_map(area, feature_layers_payload):
 
     feature_layers = get_features(area, feature_layers_payload) 
     clipped_layers = clip_layers(feature_layers, mask)
-    clipped_layers['trails'] = filter_trails(clipped_layers['trails'])
     try:
+        #clipped_layers['trails'] = filter_trails(clipped_layers['trails'])
         plot_title = calculate_trail_miles(mask, clipped_layers['trails'])
     except Exception as e:
         plot_title = f'No trail miles found: {e}'
@@ -158,7 +159,8 @@ if __name__ == '__main__':
         'parks': {
             'leisure': ['park', 'nature_reserve'],
             'boundary': ['protected_area'],
-            'landuse': ['grass']
+            'landuse': ['grass'],
+            'natural': ['wood']
         },
         'water': {
             'water': ['river', 'pond', 'lake', 'reservoir'],
@@ -170,15 +172,10 @@ if __name__ == '__main__':
         }
     }
         
-    # north_bound = 37.335
-    # south_bound = 37.25
-    # east_bound = -107.81
-    # west_bound = -107.915
-
-    north_bound = 50.5
-    south_bound = 49.5
-    east_bound = -99.5
-    west_bound = -100.5
+    north_bound = 37.335
+    south_bound = 37.25
+    east_bound = -107.81
+    west_bound = -107.915
 
 
     bbox = [north_bound, south_bound, east_bound, west_bound]
