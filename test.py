@@ -74,7 +74,7 @@ class TestGetFeatures(unittest.TestCase):
 	def test_invalid_payload_type(self):
 		valid_placename = "Globeville, Denver, Colorado, USA"
 		with self.assertRaises(TypeError):	
-			result = get_features(valid_placename, self.invalid_payload_type)
+			result = get_features(self.invalid_payload_type, valid_placename)
 
 
 class TestClipLayers(unittest.TestCase):
@@ -101,7 +101,7 @@ class TestClipLayers(unittest.TestCase):
 
 	def test_clip_layers(self):
 		#maybe floor these to make sure contains() doesn't mess up math
-		result = clip_layers(self.layers_to_clip, self.mask_gdf)
+		result = clip_layers(self.mask_gdf, self.layers_to_clip)
 		self.assertEqual(type(result), dict)
 		clipped_lines = gpd.GeoSeries(result['lines']['geometry'])
 		clipped_polygons = gpd.GeoSeries(result['polygons']['geometry'])
@@ -151,12 +151,4 @@ if __name__ == '__main__':
     unittest.main()
 
 
-
-
-
-# test filter trails
-
-# test calculate trail miles
-
-# test show
 

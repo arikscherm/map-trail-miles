@@ -3,9 +3,6 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Polygon
 import matplotlib.pyplot as plt
-import sys
-
-import shapely
 
 # Create polygon boundary for feature layers based on bounding box or placename
 # Input: area can be a list of four coordinates [north, south, east, west] or a placename as a string.
@@ -30,8 +27,6 @@ def create_mask(area) -> gpd.GeoDataFrame:
 
 # Create a dictionary of GeoDataFrames for each feature layer tag
 def get_features(area, feature_layers_payload: dict) -> dict:
-    if not isinstance(feature_layers_payload, dict):
-        raise TypeError("Feature layers must be represented by dictionary")
     feature_layers = {}
     if isinstance(area, list):
         for tag in feature_layers_payload.keys():
@@ -61,7 +56,7 @@ def get_features(area, feature_layers_payload: dict) -> dict:
     return {tag: gdf for tag, gdf in feature_layers.items() if isinstance(gdf, gpd.GeoDataFrame)}
 
 
-def clip_layers(feature_layers: dict, mask: gpd.GeoDataFrame) -> dict:
+def clip_layers( mask: gpd.GeoDataFrame, feature_layers: dict) -> dict:
     clipped_layers = {key: gpd.clip(gdf,mask) for key, gdf in feature_layers.items()}
     clipped_layers['mask'] = mask
     return clipped_layers
@@ -78,27 +73,28 @@ def get_map_projection(mask: gpd.GeoDataFrame) -> str:
 
     # Reproject to World Mercator to avoid calculating area with a geographic CRS
     valid_map_projections = valid_map_projections.to_crs('EPSG:3395')
+
     # Choose the projection with the smallest area to minimize distortion
-    projection_to_use = valid_map_projections[valid_map_projections.geometry.area == valid_map_projections.geometry.area.min()]
-    projection_to_use_code = projection_to_use.code
-    return projection_to_use_code.iloc[0]
+    chosen_projection = valid_map_projections[valid_map_projections.geometry.area == valid_map_projections.geometry.area.min()]
+    chosen_projection_code = chosen_projection.code
+    return chosen_projection_code.iloc[0]
 
 
 # Join 'highway : path' tags and 'highway : footway' tags after filtering 'highway : footway' tags by surface
 def filter_trails(trails: gpd.GeoSeries) -> str:
-    trail_segments = trails.loc[trails['highway'] == 'path']
-    footways = trails.loc[trails['highway'] == 'footway']
-    footway_trail_surfaces = ['gravel', 'dirt', 'grass','compacted']
-    footways_trail_segments = footways.loc[footways['surface'].isin(footway_trail_surfaces)]
-    trails = pd.concat([footways_trail_segments, trail_segments])
+    path_segments = trails.loc[trails['highway'] == 'path']
+    footway_segments = trails.loc[trails['highway'] == 'footway']
+    footway_trail_surfaces = ['gravel', 'dirt', 'grass','compacted', 'earth', 'ground', 'rock']
+    footway_segments = footway_segments.loc[footway_segments['surface'].isin(footway_trail_surfaces)]
+    trails = pd.concat([footway_segments, path_segments])
     return trails
 
     
 def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> dict:
-    projection_to_use = get_map_projection(mask)
-    trails_projected = trails.to_crs(projection_to_use) 
+    chosen_projection = get_map_projection(mask)
+    trails_projected = trails.to_crs(chosen_projection) 
     trail_miles = round(sum(trails_projected['geometry'].length)/1609.344,3)
-    return {'projection' : projection_to_use, 'trail_miles' : trail_miles}
+    return {'projection' : chosen_projection, 'trail_miles' : trail_miles}
     
 
 # Visualize the clipped feature layers
@@ -130,7 +126,7 @@ def create_trail_mileage_map(area, feature_layers_payload):
         return None
 
     feature_layers = get_features(area, feature_layers_payload) 
-    clipped_layers = clip_layers(feature_layers, mask)
+    clipped_layers = clip_layers(mask, feature_layers)
     try:
         clipped_layers['trails'] = filter_trails(clipped_layers['trails'])
         trails_projected = calculate_trail_miles(mask, clipped_layers['trails'])
