@@ -136,7 +136,7 @@ def create_trail_mileage_map(area, feature_layers_payload):
     try:
         clipped_layers['trails'] = filter_trails(clipped_layers['trails'])
         trails_projected = calculate_trail_miles(mask, clipped_layers['trails'])
-        plot_title =  f'{trails_projected['trail_miles']} Miles of Trail Within Area of Interest Based on {str(trails_projected['projection']).upper()} Projection'
+        plot_title =  f"{trails_projected['trail_miles']} Miles of Trail Within Area of Interest Based on {str(trails_projected['projection']).upper()} Projection"
     except Exception as e:
         plot_title = f'No trail miles found: {e}'
     show(clipped_layers, plot_title)
