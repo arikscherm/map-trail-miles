@@ -89,6 +89,7 @@ def get_map_projection(mask: gpd.GeoDataFrame) -> str:
 # Join 'highway : path' tags and 'highway : footway' tags after filtering 'highway : footway' tags by surface
 def filter_trails(trails: gpd.GeoSeries) -> gpd.GeoDataFrame:
     path_segments = trails.loc[trails['highway'] == 'path']
+    path_segments = path_segments.loc[path_segments['surface'] != 'concrete']
     footway_segments = trails.loc[trails['highway'] == 'footway']
     footway_trail_surfaces = ['gravel', 'dirt', 'grass','compacted', 'earth', 'ground', 'rock']
     footway_segments = footway_segments.loc[footway_segments['surface'].isin(footway_trail_surfaces)]
@@ -116,7 +117,7 @@ def show(clipped_layers, plot_title):
     plot_layer('mask', '#ECF2D4', zorder=float('-inf'))
     plot_layer('trails', '#BA6461', linestyle='dashed', linewidth=0.6, zorder=float('inf'))
     plot_layer('water', '#9FD9E9')
-    plot_layer('streets', '#FFFFFF')
+    plot_layer('streets', '#FFFFFF', linewidth=0.6)
     plot_layer('roads', '#F9E9A0', linewidth=1.5)
     plot_layer('highways','#F3CD71', linewidth=2)
     plot_layer('parks', '#CEDFC2')
