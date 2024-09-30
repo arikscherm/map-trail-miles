@@ -94,11 +94,11 @@ def filter_trails(trails: gpd.GeoSeries) -> str:
     return trails
 
     
-def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> str:
+def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> dict:
     projection_to_use = get_map_projection(mask)
     trails_projected = trails.to_crs(projection_to_use) 
     trail_miles = round(sum(trails_projected['geometry'].length)/1609.344,3)
-    return f'{trail_miles} Miles of Trail Within Area of Interest Based on {str(trails_projected.crs).upper()} Projection'
+    return {'projection' : projection_to_use, 'trail_miles' : trail_miles}
     
 
 # Visualize the clipped feature layers
@@ -112,7 +112,7 @@ def show(clipped_layers, plot_title):
     )
 
     plot_layer('mask', '#ECF2D4', zorder=float('-inf'))
-    plot_layer('trails', '#BA6461', linestyle='dashed', linewidth=0.8, zorder=float('inf'))
+    plot_layer('trails', '#BA6461', linestyle='dashed', linewidth=0.6, zorder=float('inf'))
     plot_layer('water', '#9FD9E9')
     plot_layer('streets', '#FFFFFF')
     plot_layer('roads', '#F9E9A0', linewidth=1.5)
@@ -132,8 +132,9 @@ def create_trail_mileage_map(area, feature_layers_payload):
     feature_layers = get_features(area, feature_layers_payload) 
     clipped_layers = clip_layers(feature_layers, mask)
     try:
-        #clipped_layers['trails'] = filter_trails(clipped_layers['trails'])
-        plot_title = calculate_trail_miles(mask, clipped_layers['trails'])
+        clipped_layers['trails'] = filter_trails(clipped_layers['trails'])
+        trails_projected = calculate_trail_miles(mask, clipped_layers['trails'])
+        plot_title =  f'{trails_projected['trail_miles']} Miles of Trail Within Area of Interest Based on {str(trails_projected['projection']).upper()} Projection'
     except Exception as e:
         plot_title = f'No trail miles found: {e}'
     show(clipped_layers, plot_title)
@@ -154,7 +155,7 @@ if __name__ == '__main__':
             'highway': ['residential', 'unclassified']
         },
         'trails': {
-            'highway': ['path']
+            'highway': ['path', 'footway']
         },
         'parks': {
             'leisure': ['park', 'nature_reserve'],
@@ -182,7 +183,6 @@ if __name__ == '__main__':
     placename = 'Durango, Colorado, USA'
 
     area = bbox # | placename
-
     create_trail_mileage_map(area, feature_layers_payload)
 
 
