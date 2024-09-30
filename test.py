@@ -147,12 +147,6 @@ class TestFilterTrails(unittest.TestCase):
 		self.assertTrue(footways.loc[footways['surface'] == 'paved'].empty)
 
 
-class TestCalcTrailMile(unittest.TestCase):
-
-	def test_durango_trails(self):
-		pass #get processed df for durango trails. write file, and then use that. load it in, run function. assert 114 something
-
-
 if __name__ == '__main__':
     unittest.main()
 
