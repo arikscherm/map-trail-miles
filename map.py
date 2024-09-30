@@ -3,6 +3,9 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Polygon
 import matplotlib.pyplot as plt
+import pathlib
+import os
+
 
 # Create polygon boundary for feature layers based on bounding box or placename
 # Input: area can be a list of four coordinates [north, south, east, west] or a placename as a string.
@@ -22,7 +25,7 @@ def create_mask(area) -> gpd.GeoDataFrame:
             raise Exception(f"Unable to geocode area {area}: {e}")
     
     else:
-        raise TypeError("Area of interest must be described by string or list of four coordiantes [north, south, east, west]")
+        raise TypeError("Area of interest must be described by string or list of four coordinates [north, south, east, west]")
 
 
 # Create a dictionary of GeoDataFrames for each feature layer tag
@@ -68,7 +71,8 @@ def get_map_projection(mask: gpd.GeoDataFrame) -> str:
     mask_centroid = mask_polygon.centroid
 
     # Load available projections and select the ones that contain the mask centroid
-    map_projections = gpd.read_file('projections.geojson')
+    projections_data_fp = pathlib.Path().resolve() / 'projections_data'
+    map_projections = gpd.read_file(f'{projections_data_fp}/projections.geojson')
     valid_map_projections = map_projections.loc[map_projections['geometry'].contains(mask_centroid)]
 
     # Reproject to World Mercator to avoid calculating area with a geographic CRS
@@ -81,7 +85,7 @@ def get_map_projection(mask: gpd.GeoDataFrame) -> str:
 
 
 # Join 'highway : path' tags and 'highway : footway' tags after filtering 'highway : footway' tags by surface
-def filter_trails(trails: gpd.GeoSeries) -> str:
+def filter_trails(trails: gpd.GeoSeries) -> gpd.GeoDataFrame:
     path_segments = trails.loc[trails['highway'] == 'path']
     footway_segments = trails.loc[trails['highway'] == 'footway']
     footway_trail_surfaces = ['gravel', 'dirt', 'grass','compacted', 'earth', 'ground', 'rock']
@@ -134,6 +138,7 @@ def create_trail_mileage_map(area, feature_layers_payload):
     except Exception as e:
         plot_title = f'No trail miles found: {e}'
     show(clipped_layers, plot_title)
+    os.makedirs('trail-mileage-maps', exist_ok=True)
     plt.savefig(f'trail-mileage-maps/{area}-trails.pdf')
 
 
