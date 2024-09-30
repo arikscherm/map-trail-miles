@@ -4,7 +4,8 @@ This project visualizes features from OpenStreetMap and calculates total trail m
 
 Here's an example using a bounding box around Durango, Colorado:
 
-<img width="705" alt="image" src="https://github.com/user-attachments/assets/f7c11be8-57d4-4412-b5a8-90822c5e02ce">
+<img width="703" alt="image" src="https://github.com/user-attachments/assets/06493f54-1e2a-49b1-80da-73ca917d1d9d">
+
 
 
 ## Prerequisites
