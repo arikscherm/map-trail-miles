@@ -56,6 +56,8 @@ def get_features(area, feature_layers_payload: dict) -> dict:
         raise TypeError("Area of interest must be described by string or list of four coordiantes [north, south, east, west]")
             
     # Filter dictionary to include only GeoDataFrame values
+    if not feature_layers:
+        raise Exception('No feature layers were fetched.')
     return {tag: gdf for tag, gdf in feature_layers.items() if isinstance(gdf, gpd.GeoDataFrame)}
 
 
