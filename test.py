@@ -1,8 +1,8 @@
+import pathlib
 import unittest
 import geopandas as gpd
 from shapely.geometry import Polygon
 from shapely.geometry import LineString
-import pathlib
 from map import create_mask
 from map import get_features
 from map import clip_layers
@@ -85,7 +85,6 @@ class TestGetFeatures(unittest.TestCase):
 			result = get_features(self.valid_placename, self.invalid_payload)
 
 
-
 class TestClipLayers(unittest.TestCase):
 
 	# Create mock inputs for clip_layers
@@ -93,20 +92,17 @@ class TestClipLayers(unittest.TestCase):
 	test_line_out_of_bounds = LineString([(8,1), (8,20)])
 	test_polygon_in_bounds = Polygon([(2,2),(4,2),(3,3)])
 	test_polygon_out_of_bounds = Polygon([(5,8),(7,8),(6,20)])
-	
+
 	test_lines_gdf = gpd.GeoDataFrame({'geometry' : [test_line_in_bounds, test_line_out_of_bounds]})
 	test_polygons_gdf = gpd.GeoDataFrame({'geometry' : [test_polygon_in_bounds, test_polygon_out_of_bounds]})
-	
+
 	layers_to_clip = {
 		'lines' : test_lines_gdf,
 		'polygons' : test_polygons_gdf
 	}
 
-	
 	mask_polygon = Polygon([(0,0),(0,10),(5,25),(10 ,10),(10,0)])
-	
 	mask_gdf = gpd.GeoDataFrame({'geometry' : [mask_polygon]})
-
 
 	def test_clip_layers(self):
 		#maybe floor these to make sure contains() doesn't mess up math
@@ -137,7 +133,6 @@ class TestMapProjection(unittest.TestCase):
 		self.assertEqual(result, 'EPSG:3395')
 
 
-
 class TestFilterTrails(unittest.TestCase):
 	test_data = pathlib.Path().resolve() / 'test_data'
 	unfiltered_trails = gpd.read_file(f'{test_data}/test_trails.geojson')
@@ -151,7 +146,7 @@ class TestFilterTrails(unittest.TestCase):
 
 	def test_filter_footways(self):
 		footways = self.filtered_trails.loc[self.filtered_trails['highway'] == 'footway']
-		
+
 		self.assertTrue(footways.loc[footways['surface'] == 'concrete'].empty)
 		self.assertTrue(footways.loc[footways['surface'] == 'asphalt'].empty)
 		self.assertTrue(footways.loc[footways['surface'] == 'paved'].empty)
@@ -159,6 +154,3 @@ class TestFilterTrails(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-
-
