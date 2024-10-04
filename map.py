@@ -1,11 +1,14 @@
-"""This module visualizes features from OpenStreetMap and calculates trail mileage for some area.
+"""This module visualizes features from OpenStreetMap and calculates trail mileage for any area.
 
-The main method of this module, create_trail_mileage_map() creates a map of desired feature layers
-for an area of interest titled with the total trail mileage along with the projected coordinate
-system it used to calculate the total trail mileage. 
+The main method of this module, create_trail_mileage_map() creates a map of an area of interest
+using data from OpenStreetMap. The map is titled with the total trail mileage along with the
+projected coordinate system that was used to calculate the total trail mileage.
 The create_trail_mileage map() takes in two arguments.
 1) The area of interest (which can be described as a bounding box or placename)
 2) The desired feature layers to be visualized on the map.
+
+The method creates a local directory called 'trail-mileage-maps' and saves the map in that
+directory.
 """
 
 import os
@@ -20,11 +23,16 @@ def create_mask(area) -> gpd.GeoDataFrame:
     """Create polygon boundary for feature layers based on bounding box or placename.
     Args:
         area: A list of four coordinates [north, south, east, west] or placename as a string.
+    Returns:
+        A polygon boundary representing the area of interest.
+    Raises:
+        ValueError: If an invalid placename or bounding box is provided.
+        TypeError: If the area is described as neither a placename or bounding box.
     """
     if isinstance(area, list):
         if len(area) != 4:
-            raise ValueError("""List must contain exactly
-                              four coordinates: [north, south, east, west]""")
+            raise ValueError('List must contain exactly'
+                            'four coordinates: [north, south, east, west]')
         north_bound, south_bound, east_bound, west_bound = area
         mask = Polygon([(west_bound, south_bound),
                         (west_bound, north_bound),
@@ -39,17 +47,22 @@ def create_mask(area) -> gpd.GeoDataFrame:
             mask = osmnx.geocode_to_gdf(area)
             return mask
         except ValueError as e:
-            raise ValueError(f"Unable to geocode area {area}: {e}")
+            raise ValueError(f'Unable to geocode area {area}: {e}')
 
     else:
-        raise TypeError("""Area of interest must be described by string or list of
-                         four coordinates [north, south, east, west]""")
+        raise TypeError('Area of interest must be described by string or list of'
+                         'four coordinates [north, south, east, west]')
 
 def get_features(area, feature_layers_payload: dict) -> dict:
-    """Create a dictionary of GeoDataFrames for each feature layer tag.
-    Inputs: 
+    """Fetch desired feature layers from OpenStreetMap.
+    Args:
         area: A list of four coordinates [north, south, east, west] or placename as a string.
         feature_layers_payload: A dictionary used to find tags on OpenStreetMap.
+    Returns:
+        A dictionary of GeoDataFrames for each feature layer tag.
+    Raises:
+        ValueError: If a feature layer cannot be retrieved from OpenStreetMap.
+        TypeError: If the area is described as neither a placename or bounding box.
     """
     feature_layers = {}
     if isinstance(area, list):
@@ -60,8 +73,8 @@ def get_features(area, feature_layers_payload: dict) -> dict:
                     tags=feature_layers_payload.get(tag)
                 )
             except ValueError as e:
-                print(f"""Error fetching features for {tag}: {e} \n
-                      https://osmnx.readthedocs.io/en/stable/user-reference.html""")
+                print(f'Error fetching features for {tag}: {e} \n'
+                      'https://osmnx.readthedocs.io/en/stable/user-reference.html')
                 continue
 
     elif isinstance(area, str):
@@ -72,12 +85,12 @@ def get_features(area, feature_layers_payload: dict) -> dict:
                     tags=feature_layers_payload.get(tag)
                 )
             except ValueError as e:
-                print(f"""Error fetching features for {tag}: {e} \n
-                      https://osmnx.readthedocs.io/en/stable/user-reference.html""")
+                print(f'Error fetching features for {tag}: {e} \n'
+                      'https://osmnx.readthedocs.io/en/stable/user-reference.html')
 
     else:
-        raise TypeError("""Area of interest must be described by string or list of
-                         four coordiantes [north, south, east, west]""")
+        raise TypeError('Area of interest must be described by string or list of'
+                        'four coordiantes [north, south, east, west]')
 
     # Filter dictionary to include only GeoDataFrame values
     if not feature_layers:
@@ -85,10 +98,12 @@ def get_features(area, feature_layers_payload: dict) -> dict:
     return {tag: gdf for tag, gdf in feature_layers.items() if isinstance(gdf, gpd.GeoDataFrame)}
 
 def clip_layers( mask: gpd.GeoDataFrame, feature_layers: dict) -> dict:
-    """Clip feature layers that extend beyond the mask boundary for the area of interest.
-    Inputs:
+    """Clip feature layers that extend beyond the mask boundary.
+    Args:
         mask: A polygon boundary representing the area of interest.
-        feature_layers_payload: A dictionary used to find tags on OpenStreetMap.
+        feature_layers: A dictionary of GeoDataFrames that contain the geometries of each layer.
+    Returns:
+        An updated feature layers dictionary where each geometry is clipped to the mask boundary.
     """
     clipped_layers = {key: gpd.clip(gdf,mask) for key, gdf in feature_layers.items()}
     clipped_layers['mask'] = mask
@@ -96,8 +111,10 @@ def clip_layers( mask: gpd.GeoDataFrame, feature_layers: dict) -> dict:
 
 def get_map_projection(mask: gpd.GeoDataFrame) -> str:
     """Find the most appropriate projected coordinate system for the area of interest.
-    Inputs: 
+    Args:
         mask: A polygon boundary representing the area of interest.
+    Returns:
+        The best fitting projected coordinate system as a string.
     """
     mask_polygon = mask['geometry'].iloc[0]
     mask_centroid = mask_polygon.centroid
@@ -117,22 +134,28 @@ def get_map_projection(mask: gpd.GeoDataFrame) -> str:
 
 def filter_trails(trails: gpd.GeoSeries) -> gpd.GeoDataFrame:
     """Merge paths and footways after filtering out non trail surfaces.
-    Inputs: 
-        trails: A GeoDataFrame representing the trails feature layer within the area of interest.
+    Valid trail surfaces include 'gravel', 'dirt', 'grass','compacted', 'earth', 'ground', 'rock'.
+    Args:
+        trails: A GeoSeries representing the trails feature layer within the area of interest.
+    Returns:
+        An updated GeoSeries that contains all paths and footways with valid trail surfaces.
     """
     path_segments = trails.loc[trails['highway'] == 'path']
     path_segments = path_segments.loc[path_segments['surface'] != 'concrete']
     footway_segments = trails.loc[trails['highway'] == 'footway']
-    trail_surfaces = ['gravel', 'dirt', 'grass','compacted', 'earth', 'ground', 'rock']
+    trail_surfaces = ['gravel', 'dirt', 'grass', 'compacted', 'earth', 'ground', 'rock']
     footway_segments = footway_segments.loc[footway_segments['surface'].isin(trail_surfaces)]
     trails = pd.concat([footway_segments, path_segments])
     return trails
 
 def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> dict:
-    """Calculate total trail mileage within area of interest after choosing best PCS.
-    Inputs:
+    """Calculate total trail mileage within area of interest according to chosen PCS.
+    Args:
         mask: A polygon boundary representing the area of interest.
-        trails: A GeoDataFrame representing the trails feature layer within the area of interest.
+        trails: A GeoSeries representing the trails feature layer within the area of interest.
+    Returns:
+        A dictionary containing the keys 'projection' and 'trail_miles', which point to the
+        chosen PCS and the calculated trail mileage respectively.
     """
     chosen_projection = get_map_projection(mask)
     trails_projected = trails.to_crs(chosen_projection)
@@ -141,9 +164,12 @@ def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> dict:
 
 def show(clipped_layers, plot_title):
     """Visualize the clipped feature layers within the area of interest.
-    Inputs:
-        clipped_layers: Dict of GeoDataFrames which contain the feature layers fetched from OSM.
+    Args:
+        clipped_layers: Dictionary of GeoDataFrames which contain the feature layers fetched from
+        OpenStreetMap and clipped to the mask boundary.
         plot_title: String displaying chosen projection system and total trail mileage caluclated.
+    Returns:
+        None
     """
     _, ax = plt.subplots(figsize=(12,8))
     ax.set_title(plot_title)
@@ -164,10 +190,12 @@ def show(clipped_layers, plot_title):
     plot_layer('buildings', '#D4D1CB')
 
 def create_trail_mileage_map(area, feature_layers_payload):
-    """Main function to create and save a trail mileage map as a .pdf
-    Inputs: 
+    """Main function to create and save a trail mileage map as a .pdf.
+    Args:
         area: A list of four coordinates [north, south, east, west] or placename as a string.
         feature_layers_payload: A dictionary used to find tags on OpenStreetMap.
+    Returns:
+        0
     """
     mask = create_mask(area)
     feature_layers = get_features(area, feature_layers_payload)
@@ -176,7 +204,7 @@ def create_trail_mileage_map(area, feature_layers_payload):
         clipped_layers['trails'] = filter_trails(clipped_layers['trails'])
         trails_projected = calculate_trail_miles(mask, clipped_layers['trails'])
         plot_title =  (f"{trails_projected['trail_miles']} Miles of Trail Within Area of Interest"
-                    f"Based on {str(trails_projected['projection']).upper()} Projection")
+                    f" Based on {str(trails_projected['projection']).upper()} Projection")
 
     except ValueError as e:
         plot_title = f'No trail miles found: {e}'
@@ -221,7 +249,6 @@ if __name__ == '__main__':
     SOUTH_BOUND = 37.25
     EAST_BOUND = -107.81
     WEST_BOUND = -107.915
-
 
     BBOX = [NORTH_BOUND, SOUTH_BOUND, EAST_BOUND, WEST_BOUND]
     PLACENAME = 'Durango, Colorado, USA'
