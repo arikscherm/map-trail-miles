@@ -18,6 +18,7 @@ import osmnx
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Polygon
+from pyproj import Transformer
 
 def create_mask(area) -> gpd.GeoDataFrame:
     """Create polygon boundary for feature layers based on bounding box or placename.
@@ -148,7 +149,7 @@ def filter_trails(trails: gpd.GeoSeries) -> gpd.GeoDataFrame:
     trails = pd.concat([footway_segments, path_segments])
     return trails
 
-def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> dict:
+def calculate_trail_miles(mask: gpd.GeoDataFrame, trails: gpd.GeoSeries) -> dict:
     """Calculate total trail mileage within area of interest according to chosen PCS.
     Args:
         mask: A polygon boundary representing the area of interest.
@@ -160,7 +161,18 @@ def calculate_trail_miles(mask: gpd.GeoSeries, trails: gpd.GeoSeries) -> dict:
     chosen_projection = get_map_projection(mask)
     trails_projected = trails.to_crs(chosen_projection)
     trail_miles = round(sum(trails_projected['geometry'].length)/1609.344,3)
-    return {'projection' : chosen_projection, 'trail_miles' : trail_miles}
+    try:
+        # Only calculate mask area/trail density for single polygons.
+        mask_4326_coords = list(mask['geometry'][0].exterior.coords)
+        transformer = Transformer.from_crs('EPSG:4326', chosen_projection, always_xy=True)
+        mask_projected_coords = [transformer.transform(lon, lat) for lon, lat in mask_4326_coords]
+        mask_projected_area = Polygon(mask_projected_coords).area/2589990
+        trail_density_per_mile = round(trail_miles/mask_projected_area, 3)
+        return {'projection' : chosen_projection,
+                'trail_miles' : trail_miles,
+                'trail_density_per_mile' : trail_density_per_mile}
+    except AttributeError:
+        return {'projection' : chosen_projection, 'trail_miles' : trail_miles}
 
 def show(clipped_layers, plot_title):
     """Visualize the clipped feature layers within the area of interest.
@@ -203,8 +215,15 @@ def create_trail_mileage_map(area, feature_layers_payload):
     try:
         clipped_layers['trails'] = filter_trails(clipped_layers['trails'])
         trails_projected = calculate_trail_miles(mask, clipped_layers['trails'])
-        plot_title =  (f"{trails_projected['trail_miles']} Miles of Trail Within Area of Interest"
-                    f" Based on {str(trails_projected['projection']).upper()} Projection")
+        if 'trail_density_per_mile' in trails_projected:
+            plot_title =  (f"{trails_projected['trail_miles']} Miles of Trail"
+                           f" ({trails_projected['trail_density_per_mile']} Per Square Mile)"
+                           f" Within Area of Interest Based on"
+                           f" {str(trails_projected['projection']).upper()} Projection.")
+        else:
+            plot_title =  (f"{trails_projected['trail_miles']}"
+            f" Miles of Trail Within Area of Interest"
+            f" Based on {str(trails_projected['projection']).upper()} Projection")
 
     except ValueError as e:
         plot_title = f'No trail miles found: {e}'
