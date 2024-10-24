@@ -222,7 +222,7 @@ def create_trail_mileage_map(area, feature_layers_payload):
         trails_projected = calculate_trail_miles(mask, clipped_layers['trails'])
         if 'trail_density_per_mile' in trails_projected:
             plot_title =  (f"{trails_projected['trail_miles']} Miles of Trail"
-                           f" ({trails_projected['trail_density_per_mile']} Per Square Mile)"
+                           f" ({trails_projected['trail_density_per_mile']} Miles/ Square Mile)"
                            f" Within Area of Interest Based on"
                            f" {str(trails_projected['projection']).upper()} Projection.")
         else:
