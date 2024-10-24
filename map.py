@@ -1,8 +1,7 @@
-"""This module visualizes features from OpenStreetMap and calculates trail mileage for any area.
+"""Visualize features from OpenStreetMap and calculates trail mileage for any area.
 
 The main method of this module, create_trail_mileage_map() creates a map of an area of interest
-using data from OpenStreetMap. The map is titled with the total trail mileage along with the
-projected coordinate system that was used to calculate the total trail mileage.
+using data from OpenStreetMap. The map is titled with the total trail mileage found in that area.
 The create_trail_mileage map() takes in two arguments.
 1) The area of interest (which can be described as a bounding box or placename)
 2) The desired feature layers to be visualized on the map.
@@ -133,13 +132,13 @@ def get_map_projection(mask: gpd.GeoDataFrame) -> str:
     chosen_projection_code = chosen_projection.code
     return chosen_projection_code
 
-def filter_trails(trails: gpd.GeoSeries) -> gpd.GeoDataFrame:
+def filter_trails(trails: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """Merge paths and footways after filtering out non trail surfaces.
     Valid trail surfaces include 'gravel', 'dirt', 'grass','compacted', 'earth', 'ground', 'rock'.
     Args:
-        trails: A GeoSeries representing the trails feature layer within the area of interest.
+        trails: A GeoDataFrame representing the trails feature layer within the area of interest.
     Returns:
-        An updated GeoSeries that contains all paths and footways with valid trail surfaces.
+        An updated GeoDataFrame that contains all paths and footways with valid trail surfaces.
     """
     path_segments = trails.loc[trails['highway'] == 'path']
     path_segments = path_segments.loc[path_segments['surface'] != 'concrete']
@@ -149,11 +148,11 @@ def filter_trails(trails: gpd.GeoSeries) -> gpd.GeoDataFrame:
     trails = pd.concat([footway_segments, path_segments])
     return trails
 
-def calculate_trail_miles(mask: gpd.GeoDataFrame, trails: gpd.GeoSeries) -> dict:
-    """Calculate total trail mileage within area of interest according to chosen PCS.
+def calculate_trail_miles(mask: gpd.GeoDataFrame, trails: gpd.GeoDataFrame) -> dict:
+    """Calculate total trail mileage within area of interest according to chosen CRS.
     Args:
         mask: A polygon boundary representing the area of interest.
-        trails: A GeoSeries representing the trails feature layer within the area of interest.
+        trails: A GeoDataFrame representing the trails feature layer within the area of interest.
     Returns:
         A dictionary containing the keys 'projection' and 'trail_miles', which point to the
         chosen PCS and the calculated trail mileage respectively.
@@ -164,13 +163,19 @@ def calculate_trail_miles(mask: gpd.GeoDataFrame, trails: gpd.GeoSeries) -> dict
     try:
         # Only calculate mask area/trail density for single polygons.
         mask_4326_coords = list(mask['geometry'][0].exterior.coords)
+        
+        # Create list of (longitude, latitude) tuples using the chosen CRS.
         transformer = Transformer.from_crs('EPSG:4326', chosen_projection, always_xy=True)
         mask_projected_coords = [transformer.transform(lon, lat) for lon, lat in mask_4326_coords]
+        
+        # Calculate average trail mileage per square mile within area of interest.
         mask_projected_area = Polygon(mask_projected_coords).area/2589990
         trail_density_per_mile = round(trail_miles/mask_projected_area, 3)
         return {'projection' : chosen_projection,
                 'trail_miles' : trail_miles,
                 'trail_density_per_mile' : trail_density_per_mile}
+    
+    # If area of interest is a multipolygon, don't calculate trail density.
     except AttributeError:
         return {'projection' : chosen_projection, 'trail_miles' : trail_miles}
 
