@@ -126,11 +126,11 @@ class TestMapProjection(unittest.TestCase):
 		self.assertEqual(result, 'EPSG:2774')
 
 
-	def test_epsg3395(self):
+	def test_epsg4087(self):
 		polygon = Polygon([(137.23, -26.91),(137.23, -26.92),(137.24, -26.92),(137.24, -26.91)])
 		mask = gpd.GeoDataFrame({'geometry' : [polygon]})
 		result = get_map_projection(mask)
-		self.assertEqual(result, 'EPSG:3395')
+		self.assertEqual(result, 'EPSG:4087')
 
 
 class TestFilterTrails(unittest.TestCase):
