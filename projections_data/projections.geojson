@@ -52,7 +52,7 @@
            },
            "properties": {
                "name": "Colorado North",
-               "code": "EPSG:2231"
+               "code": "EPSG:2772"
            }
        }, {
            "type": "Feature",
