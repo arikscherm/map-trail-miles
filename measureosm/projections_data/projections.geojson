@@ -168,17 +168,17 @@
                "type": "Polygon",
                "coordinates": [
                    [ 
-                       [-180.0, -80.0],
-                       [180.0, -80.0],
-                       [180.0, 84.0],
-                       [-180.0, 84.0],
-                       [-180.0, -80.0]
+                       [-180.0, -90.0],
+                       [180.0, -90.0],
+                       [180.0, 90.0],
+                       [-180.0, 90.0],
+                       [-180.0, -90.0]
                    ]
                ]
            },
            "properties": {
-               "name": "WGS 84 / World Mercator",
-               "code": "EPSG:3395"
+               "name": "WGS 84 / World Equidistant Cylindrical",
+               "code": "EPSG:4087"
            }
        }
 

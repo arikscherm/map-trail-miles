@@ -120,7 +120,7 @@ def get_map_projection(mask: gpd.GeoDataFrame) -> str:
     mask_centroid = mask_polygon.centroid
 
     # Load available projections and select the ones that contain the mask centroid
-    projections_data_fp = pathlib.Path().resolve() / 'projections_data'
+    projections_data_fp = '/Users/arischermer/Desktop/Repos/map-trail-miles/trailcalc/projections_data' #pathlib.Path().resolve() / 'projections_data' Will need to cange this back #####################
     map_projections = gpd.read_file(f'{projections_data_fp}/projections.geojson')
     valid_map_projections = map_projections.loc[map_projections['geometry'].contains(mask_centroid)]
 
@@ -141,11 +141,14 @@ def filter_trails(trails: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         An updated GeoDataFrame that contains all paths and footways with valid trail surfaces.
     """
     path_segments = trails.loc[trails['highway'] == 'path']
-    path_segments = path_segments.loc[path_segments['surface'] != 'concrete']
-    footway_segments = trails.loc[trails['highway'] == 'footway']
-    trail_surfaces = ['gravel', 'dirt', 'grass', 'compacted', 'earth', 'ground', 'rock']
-    footway_segments = footway_segments.loc[footway_segments['surface'].isin(trail_surfaces)]
-    trails = pd.concat([footway_segments, path_segments])
+    try:
+        path_segments = path_segments.loc[path_segments['surface'] != 'concrete']
+        footway_segments = trails.loc[trails['highway'] == 'footway']
+        trail_surfaces = ['gravel', 'dirt', 'grass', 'compacted', 'earth', 'ground', 'rock']
+        footway_segments = footway_segments.loc[footway_segments['surface'].isin(trail_surfaces)]
+        trails = pd.concat([footway_segments, path_segments])
+    except:
+        return trails #be more explicit when you get a chance ##################################
     return trails
 
 def calculate_trail_miles(mask: gpd.GeoDataFrame, trails: gpd.GeoDataFrame) -> dict:
@@ -177,7 +180,9 @@ def calculate_trail_miles(mask: gpd.GeoDataFrame, trails: gpd.GeoDataFrame) -> d
     
     # If area of interest is a multipolygon, don't calculate trail density.
     except AttributeError:
-        return {'projection' : chosen_projection, 'trail_miles' : trail_miles}
+        return {'projection' : chosen_projection,
+                'trail_miles' : trail_miles,
+                'trail_density_per_mile' : -1}
 
 def show(clipped_layers, plot_title):
     """Visualize the clipped feature layers within the area of interest.
@@ -206,7 +211,7 @@ def show(clipped_layers, plot_title):
     plot_layer('parks', '#CEDFC2')
     plot_layer('buildings', '#D4D1CB')
 
-def create_trail_mileage_map(area, feature_layers_payload):
+def create_trail_mileage_map(area, feature_layers_payload) -> dict:
     """Main function to create and save a trail mileage map as a .pdf.
     Args:
         area: A list of four coordinates [north, south, east, west] or placename as a string.
@@ -220,7 +225,7 @@ def create_trail_mileage_map(area, feature_layers_payload):
     try:
         clipped_layers['trails'] = filter_trails(clipped_layers['trails'])
         trails_projected = calculate_trail_miles(mask, clipped_layers['trails'])
-        if 'trail_density_per_mile' in trails_projected:
+        if trails_projected['trail_density_per_mile'] != -1:
             plot_title =  (f"{trails_projected['trail_miles']} Miles of Trail"
                            f" ({trails_projected['trail_density_per_mile']} Miles/ Square Mile)"
                            f" Within Area of Interest Based on"
@@ -230,12 +235,13 @@ def create_trail_mileage_map(area, feature_layers_payload):
             f" Miles of Trail Within Area of Interest"
             f" Based on {str(trails_projected['projection']).upper()} Projection")
 
-    except ValueError as e:
+    except Exception as e: #Be more explicit here when you get a chance ############################
         plot_title = f'No trail miles found: {e}'
+        return f'something is wrong: {e}'
     show(clipped_layers, plot_title)
     os.makedirs('trail-mileage-maps', exist_ok=True)
     plt.savefig(f'trail-mileage-maps/{area}-trails.pdf')
-    return 0
+    return trails_projected
 
 
 if __name__ == '__main__':
