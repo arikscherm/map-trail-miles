@@ -9,7 +9,11 @@ The create_trail_mileage map() takes in two arguments.
 The method creates a local directory called 'trail-mileage-maps' and saves the map in that
 directory.
 """
-
+# Work in progress----
+# TODO: check lines 123, 151 and 238. 
+# TODO: Create seperate functions to create map and save map. Also Make sure measuring geometries is easy, not just trails
+# TODO: Rename to MeasureOSM or mosm
+# TODO: Redo colorado trail heatmap, fix bugs that come up and add tests
 import os
 import pathlib
 import matplotlib.pyplot as plt
@@ -120,7 +124,7 @@ def get_map_projection(mask: gpd.GeoDataFrame) -> str:
     mask_centroid = mask_polygon.centroid
 
     # Load available projections and select the ones that contain the mask centroid
-    projections_data_fp = '/Users/arischermer/Desktop/Repos/map-trail-miles/trailcalc/projections_data' #pathlib.Path().resolve() / 'projections_data' Will need to cange this back #####################
+    projections_data_fp = pathlib.Path().resolve() / 'projections_data' #Need to double check this one ###########################
     map_projections = gpd.read_file(f'{projections_data_fp}/projections.geojson')
     valid_map_projections = map_projections.loc[map_projections['geometry'].contains(mask_centroid)]
 
