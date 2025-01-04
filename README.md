@@ -1,4 +1,4 @@
-# map-trail-miles
+# MeasureOSM
 
 This project visualizes features from OpenStreetMap and calculates total trail mileage within a geographic area of interest.
 
